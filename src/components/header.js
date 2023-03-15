@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import FoodOptions from './foodOptions.js';
+import FoodShow from './foodShow.js';
 import { fetch5Recipes } from '../actions';
 
 const Header = () => {
@@ -13,6 +14,7 @@ const Header = () => {
   };
 
   const handleSubmit = (event) => {
+    console.log('I am CLICKD');
     event.preventDefault();
     dispatch(fetch5Recipes(restrictions));
   };
@@ -30,6 +32,7 @@ const Header = () => {
             Get 5 Random Recipes
           </button>
         </form>
+        <FoodShow recipes={recipes} />
       </div>
     </div>
   );
