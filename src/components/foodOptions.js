@@ -14,13 +14,19 @@ const animatedComponents = makeAnimated();
 
 function FoodOptions({ onRestrictionsChange }) {
   return (
-    <Select
-      closeMenuOnSelect={false}
-      components={animatedComponents}
-      isMulti
-      options={options}
-      onChange={onRestrictionsChange}
-    />
+    <div className="container">
+      <div className="row justify-content-md-center">
+        <div className="col-5">
+          <Select
+            closeMenuOnSelect={false}
+            components={animatedComponents}
+            isMulti
+            options={options}
+            onChange={onRestrictionsChange}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 

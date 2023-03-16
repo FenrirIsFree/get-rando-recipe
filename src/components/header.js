@@ -32,9 +32,7 @@ const Header = () => {
     setShowButton(true);
   };
 
-  const handleGoBack = () => {
-    setShowButton(true);
-  };
+  const cleanInstructions = (html) => html.replace(/<\/?ol>|<\/?li>/g, '');
 
   return (
     <div>
@@ -47,37 +45,47 @@ const Header = () => {
         <h4>Choose Recipe Restrictions</h4>
         <FoodOptions onRestrictionsChange={handleRestrictionsChange} />
         {showButton && (
-          <button type="submit" className="btn btn-secondary">
-            Get 5 Random Recipes
-          </button>
+          <div className="container">
+            <div className="row justify-content-md-center">
+              <div className="col-2">
+                <button type="submit" className="btn btn-secondary">
+                  Get 5 Random Recipes
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </form>
       {!selectedRecipe ? (
-        <FoodShow
-          recipes={recipes}
-          onTitleClick={handleTitleClick}
-          onGoBack={handleGoBack}
-        />
+        <FoodShow recipes={recipes} onTitleClick={handleTitleClick} />
       ) : (
-        <div>
-          <h2>{selectedRecipe.title}</h2>
-          <ul>
-            {selectedRecipe.extendedIngredients.map((ingredient) => {
-              const uniqueKey = uuidv4();
-              return <li key={uniqueKey}>{ingredient.original}</li>;
-            })}
-          </ul>
-          <div>{selectedRecipe.instructions}</div>
-          <a
-            href={selectedRecipe.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            View Recipe Source
-          </a>
-          <button type="button" onClick={handleReset}>
-            Go Back
-          </button>
+        <div className="container">
+          <div className="row justify-content-md-center">
+            <div className="col">
+              <h2>{selectedRecipe.title}</h2>
+              <ul>
+                {selectedRecipe.extendedIngredients.map((ingredient) => {
+                  const uniqueKey = uuidv4();
+                  return <li key={uniqueKey}>{ingredient.original}</li>;
+                })}
+              </ul>
+              <div>{cleanInstructions(selectedRecipe.instructions)}</div>
+              <a
+                href={selectedRecipe.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View Recipe Source
+              </a>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleReset}
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

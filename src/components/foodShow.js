@@ -10,27 +10,26 @@ const FoodShow = ({ recipes, onTitleClick }) => {
   };
 
   return (
-    <div>
-      {recipes.map((recipe) => {
-        const uniqueKey = uuidv4();
-        return (
-          <div key={uniqueKey}>
-            <button
-              type="button"
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-              onClick={() => onTitleClick(recipe)}
-              onKeyDown={(event) => handleKeyDown(event, recipe)}
-            >
-              <h3>{recipe.title}</h3>
-            </button>
-          </div>
-        );
-      })}
+    <div className="container">
+      <div className="row">
+        <div className="col title-view">
+          {recipes.map((recipe) => {
+            const uniqueKey = uuidv4();
+            return (
+              <div key={uniqueKey}>
+                <button
+                  type="button"
+                  className="btn btn-link"
+                  onClick={() => onTitleClick(recipe)}
+                  onKeyDown={(event) => handleKeyDown(event, recipe)}
+                >
+                  <h3>{recipe.title}</h3>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
