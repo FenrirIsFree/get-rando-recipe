@@ -1,11 +1,8 @@
-h2 {
-  text-align: center;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-h4 {
-  text-align: center;
-}
-
-.title-view {
-  text-align: center;
+/* Custom styles */
+body {
+  @apply bg-gray-50 min-h-screen;
 }
