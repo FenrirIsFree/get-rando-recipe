@@ -4,11 +4,11 @@ import axios from 'axios';
 import FoodOptions from './components/foodOptions';
 import RecipeCard from './components/RecipeCard';
 
-const API_KEY = process.env.REACT_APP_SPOONACULAR_API_KEY;
+const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 
 const fetchRecipes = async (restrictions) => {
   if (!API_KEY) {
-    throw new Error('API key not configured. Please add REACT_APP_SPOONACULAR_API_KEY to your .env file');
+    throw new Error('API key not configured. Please add VITE_SPOONACULAR_API_KEY to your .env file');
   }
   const { data } = await axios.get(
     `https://api.spoonacular.com/recipes/random?number=5&tags=${restrictions}&apiKey=${API_KEY}`
