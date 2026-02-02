@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import FoodOptions from './components/FoodOptions';
@@ -27,12 +27,30 @@ const saveFavorites = (favorites) => {
   localStorage.setItem('recipeApp_favorites', JSON.stringify(favorites));
 };
 
+// Get dark mode preference
+const getDarkMode = () => {
+  const saved = localStorage.getItem('recipeApp_darkMode');
+  if (saved !== null) return JSON.parse(saved);
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+};
+
 function App() {
   const [restrictions, setRestrictions] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [shouldFetch, setShouldFetch] = useState(false);
   const [favorites, setFavorites] = useState(getFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [darkMode, setDarkMode] = useState(getDarkMode);
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('recipeApp_darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   const { data: recipes, isLoading, error, refetch } = useQuery({
     queryKey: ['recipes', restrictions],
@@ -80,14 +98,26 @@ function App() {
   const displayRecipes = showFavorites ? favorites : recipes;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-gray-800 shadow-sm transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">
-            🍳 Pick A Random Recipe
-          </h1>
-          <p className="text-gray-500 text-center mt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex-1" />
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white text-center">
+              🍳 Pick A Random Recipe
+            </h1>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+            </div>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 text-center mt-2">
             Discover new meals based on your dietary preferences
           </p>
         </div>
@@ -96,17 +126,17 @@ function App() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Search Form */}
         {!selectedRecipe && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-colors duration-300">
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
               Choose Recipe Restrictions
             </h2>
-            <FoodOptions onRestrictionsChange={handleRestrictionsChange} />
+            <FoodOptions onRestrictionsChange={handleRestrictionsChange} isDark={darkMode} />
             
             <div className="flex flex-col sm:flex-row gap-3 mt-6">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 dark:disabled:bg-orange-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -128,7 +158,7 @@ function App() {
                   className={`px-6 py-3 rounded-lg font-semibold transition-colors duration-200 ${
                     showFavorites 
                       ? 'bg-red-500 text-white hover:bg-red-600' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
                   ❤️ Favorites ({favorites.length})
@@ -140,14 +170,14 @@ function App() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
             {error.message}
           </div>
         )}
 
         {/* Recipe Detail View */}
         {selectedRecipe ? (
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-colors duration-300">
             {selectedRecipe.image && (
               <img 
                 src={selectedRecipe.image} 
@@ -157,7 +187,7 @@ function App() {
             )}
             <div className="p-6">
               <div className="flex items-start justify-between gap-4 mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                   {selectedRecipe.title}
                 </h2>
                 <button
@@ -170,32 +200,44 @@ function App() {
               
               <div className="flex flex-wrap gap-2 mb-6">
                 {selectedRecipe.vegetarian && (
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">🥬 Vegetarian</span>
+                  <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full text-sm">🥬 Vegetarian</span>
                 )}
                 {selectedRecipe.vegan && (
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">🌱 Vegan</span>
+                  <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full text-sm">🌱 Vegan</span>
                 )}
                 {selectedRecipe.glutenFree && (
-                  <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm">🌾 Gluten-Free</span>
+                  <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1 rounded-full text-sm">🌾 Gluten-Free</span>
+                )}
+                {selectedRecipe.dairyFree && (
+                  <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-sm">🥛 Dairy-Free</span>
+                )}
+                {selectedRecipe.veryHealthy && (
+                  <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-3 py-1 rounded-full text-sm">💪 Very Healthy</span>
+                )}
+                {selectedRecipe.cheap && (
+                  <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full text-sm">💰 Budget</span>
                 )}
                 {selectedRecipe.readyInMinutes && (
-                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">⏱️ {selectedRecipe.readyInMinutes} min</span>
+                  <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-sm">⏱️ {selectedRecipe.readyInMinutes} min</span>
+                )}
+                {selectedRecipe.servings && (
+                  <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-sm">🍽️ {selectedRecipe.servings} servings</span>
                 )}
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">Ingredients</h3>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">Ingredients</h3>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
                 {selectedRecipe.extendedIngredients?.map((ingredient, index) => (
-                  <li key={index} className="flex items-center gap-2 text-gray-600">
+                  <li key={index} className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                     <span className="text-orange-500">•</span>
                     {ingredient.original}
                   </li>
                 ))}
               </ul>
 
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">Instructions</h3>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">Instructions</h3>
               <div 
-                className="text-gray-600 prose max-w-none"
+                className="text-gray-600 dark:text-gray-300 prose dark:prose-invert max-w-none"
                 dangerouslySetInnerHTML={{ 
                   __html: selectedRecipe.instructions || '<p>No instructions available.</p>' 
                 }}
@@ -204,7 +246,7 @@ function App() {
               <div className="flex flex-col sm:flex-row gap-3 mt-8">
                 <button
                   onClick={handleBack}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
                 >
                   ← Back to Results
                 </button>
@@ -223,7 +265,7 @@ function App() {
           /* Recipe Grid */
           displayRecipes && displayRecipes.length > 0 && (
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">
+              <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
                 {showFavorites ? '❤️ Your Favorites' : '🍽️ Your Recipes'}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -234,6 +276,7 @@ function App() {
                     onClick={() => handleRecipeClick(recipe)}
                     onToggleFavorite={() => toggleFavorite(recipe)}
                     isFavorite={isFavorite(recipe)}
+                    isDark={darkMode}
                   />
                 ))}
               </div>
@@ -243,14 +286,14 @@ function App() {
 
         {/* Empty State */}
         {!isLoading && !selectedRecipe && !displayRecipes?.length && !showFavorites && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <p className="text-6xl mb-4">🍳</p>
             <p>Select your preferences and click the button to discover recipes!</p>
           </div>
         )}
 
         {showFavorites && favorites.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <p className="text-6xl mb-4">💔</p>
             <p>No favorites yet. Click the heart on recipes you love!</p>
           </div>
@@ -258,7 +301,7 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-gray-400 text-sm">
+      <footer className="text-center py-6 text-gray-400 dark:text-gray-500 text-sm">
         Built with React & Spoonacular API
       </footer>
     </div>
