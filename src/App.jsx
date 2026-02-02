@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import FoodOptions from './components/foodOptions';
+import FoodOptions from './components/FoodOptions';
 import RecipeCard from './components/RecipeCard';
 
 const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
