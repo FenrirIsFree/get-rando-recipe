@@ -78,6 +78,11 @@ const MealPlanner = ({ mealPlan, onRemoveMeal, onViewRecipe }) => {
                       >
                         {meal.title}
                       </p>
+                      {meal.plannedServings && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          🍽️ {meal.plannedServings} servings
+                        </p>
+                      )}
                       <button
                         onClick={() => onRemoveMeal(dateKey, meal.id)}
                         className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs transition-opacity"

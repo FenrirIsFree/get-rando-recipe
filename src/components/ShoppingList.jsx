@@ -51,6 +51,11 @@ const ShoppingList = ({ mealPlan, onClose }) => {
     Object.values(mealPlan).forEach((meals) => {
       meals.forEach((recipe) => {
         if (recipe.extendedIngredients) {
+          // Calculate servings multiplier
+          const plannedServings = recipe.plannedServings || recipe.servings || 1;
+          const originalServings = recipe.originalServings || recipe.servings || 1;
+          const multiplier = plannedServings / originalServings;
+          
           recipe.extendedIngredients.forEach((ing) => {
             const key = normalizeIngredient(ing.name || ing.nameClean || 'unknown');
             const aisle = ing.aisle || 'Other';
@@ -65,7 +70,9 @@ const ShoppingList = ({ mealPlan, onClose }) => {
             }
             
             const item = ingredientMap.get(key);
-            item.amounts.push({ amount: ing.amount, unit: ing.unit });
+            // Scale amount by servings multiplier
+            const scaledAmount = (ing.amount || 0) * multiplier;
+            item.amounts.push({ amount: scaledAmount, unit: ing.unit });
             item.recipes.add(recipe.title);
           });
         }

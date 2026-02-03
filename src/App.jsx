@@ -113,7 +113,7 @@ function App() {
     setShowDayPicker(true);
   };
 
-  const handleSelectDay = (dateKey) => {
+  const handleSelectDay = (dateKey, servings) => {
     if (recipeToAdd) {
       // Check if recipe is already on this day
       const existingMeals = mealPlan[dateKey] || [];
@@ -124,9 +124,16 @@ function App() {
         return;
       }
       
+      // Add recipe with planned servings
+      const recipeWithServings = {
+        ...recipeToAdd,
+        plannedServings: servings,
+        originalServings: recipeToAdd.servings || 1,
+      };
+      
       setMealPlan((prev) => ({
         ...prev,
-        [dateKey]: [...(prev[dateKey] || []), recipeToAdd],
+        [dateKey]: [...(prev[dateKey] || []), recipeWithServings],
       }));
       setShowDayPicker(false);
       setRecipeToAdd(null);
@@ -156,6 +163,7 @@ function App() {
             setShowDayPicker(false);
             setRecipeToAdd(null);
           }}
+          defaultServings={recipeToAdd?.servings || 2}
         />
       )}
 
