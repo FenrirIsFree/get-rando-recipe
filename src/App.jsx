@@ -80,11 +80,26 @@ function App() {
   // Helper to add to history
   const addToHistory = (recipe, action) => {
     setRecipeHistory((prev) => {
-      // Remove existing entry for same recipe+action (to avoid duplicates)
-      const filtered = prev.filter(
-        (entry) => !(entry.recipe.id === recipe.id && entry.action === action)
-      );
+      const now = Date.now();
+      const existingIndex = prev.findIndex((entry) => entry.recipe.id === recipe.id);
       
+      if (existingIndex !== -1) {
+        // Update existing entry
+        const existing = prev[existingIndex];
+        const updatedEntry = {
+          ...existing,
+          actions: existing.actions.includes(action) 
+            ? existing.actions 
+            : [...existing.actions, action],
+          timestamps: { ...existing.timestamps, [action]: now },
+          lastActivity: now,
+        };
+        // Move to top
+        const filtered = prev.filter((_, i) => i !== existingIndex);
+        return [updatedEntry, ...filtered].slice(0, 100);
+      }
+      
+      // Create new entry
       const entry = {
         recipe: {
           id: recipe.id,
@@ -93,11 +108,11 @@ function App() {
           servings: recipe.servings,
           readyInMinutes: recipe.readyInMinutes,
         },
-        action,
-        timestamp: Date.now(),
+        actions: [action],
+        timestamps: { [action]: now },
+        lastActivity: now,
       };
-      // Add to top, keep last 100 entries
-      return [entry, ...filtered].slice(0, 100);
+      return [entry, ...prev].slice(0, 100);
     });
   };
 

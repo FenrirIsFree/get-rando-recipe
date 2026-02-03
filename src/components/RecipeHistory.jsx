@@ -13,12 +13,14 @@ const ACTION_LABELS = {
   planned: 'Planned',
 };
 
+const ACTION_ORDER = ['viewed', 'favorited', 'planned'];
+
 const RecipeHistory = ({ history, onViewRecipe, onClearHistory, onClose }) => {
   const [filter, setFilter] = useState('all');
 
   const filteredHistory = filter === 'all' 
     ? history 
-    : history.filter((entry) => entry.action === filter);
+    : history.filter((entry) => entry.actions?.includes(filter) || entry.action === filter);
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
@@ -33,6 +35,18 @@ const RecipeHistory = ({ history, onViewRecipe, onClearHistory, onClose }) => {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString();
+  };
+
+  // Get actions for an entry (handle both old and new format)
+  const getActions = (entry) => {
+    if (entry.actions) return entry.actions;
+    if (entry.action) return [entry.action];
+    return [];
+  };
+
+  // Get timestamp for an entry (handle both old and new format)
+  const getTimestamp = (entry) => {
+    return entry.lastActivity || entry.timestamp;
   };
 
   return (
@@ -83,39 +97,47 @@ const RecipeHistory = ({ history, onViewRecipe, onClearHistory, onClose }) => {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredHistory.map((entry, index) => (
-                <div
-                  key={`${entry.recipe.id}-${entry.timestamp}-${index}`}
-                  onClick={() => onViewRecipe(entry.recipe)}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                >
-                  {entry.recipe.image ? (
-                    <img
-                      src={entry.recipe.image}
-                      alt={entry.recipe.title}
-                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      🍽️
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-800 dark:text-white truncate">
-                      {entry.recipe.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-lg">{ACTION_ICONS[entry.action]}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {ACTION_LABELS[entry.action]}
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
-                        • {formatDate(entry.timestamp)}
-                      </span>
+              {filteredHistory.map((entry, index) => {
+                const actions = getActions(entry);
+                const timestamp = getTimestamp(entry);
+                
+                return (
+                  <div
+                    key={`${entry.recipe.id}-${index}`}
+                    onClick={() => onViewRecipe(entry.recipe)}
+                    className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                  >
+                    {entry.recipe.image ? (
+                      <img
+                        src={entry.recipe.image}
+                        alt={entry.recipe.title}
+                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        🍽️
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-800 dark:text-white truncate">
+                        {entry.recipe.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex gap-1">
+                          {ACTION_ORDER.filter((a) => actions.includes(a)).map((action) => (
+                            <span key={action} className="text-lg" title={ACTION_LABELS[action]}>
+                              {ACTION_ICONS[action]}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                          • {formatDate(timestamp)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
