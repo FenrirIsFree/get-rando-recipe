@@ -14,10 +14,13 @@ const fetchRecipes = async (restrictions) => {
   if (!API_KEY) {
     throw new Error('API key not configured. Please add VITE_SPOONACULAR_API_KEY to your .env file');
   }
+  // Fetch extra to account for recipes without source URLs
   const { data } = await axios.get(
-    `https://api.spoonacular.com/recipes/random?number=6&tags=${restrictions}&apiKey=${API_KEY}`
+    `https://api.spoonacular.com/recipes/random?number=12&tags=${restrictions}&apiKey=${API_KEY}`
   );
-  return data.recipes;
+  // Filter to only recipes with source URLs, take first 6
+  const validRecipes = data.recipes.filter((recipe) => recipe.sourceUrl);
+  return validRecipes.slice(0, 6);
 };
 
 // localStorage helpers
