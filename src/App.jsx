@@ -18,7 +18,7 @@ const fetchRecipes = async (restrictions) => {
   // Parse restrictions into API parameters
   const params = new URLSearchParams({
     apiKey: API_KEY,
-    number: '24', // Fetch more to account for client-side filtering
+    number: '12',
     addRecipeInformation: 'true',
     fillIngredients: 'true',
     sort: 'random',
@@ -27,8 +27,6 @@ const fetchRecipes = async (restrictions) => {
   // Map our filter values to API parameters
   const dietFilters = [];
   const intoleranceFilters = [];
-  let requireHealthy = false;
-  let requireBudget = false;
   
   if (restrictions) {
     const tags = restrictions.split(',');
@@ -51,12 +49,6 @@ const fetchRecipes = async (restrictions) => {
         case 'dairy-free':
           intoleranceFilters.push('dairy');
           break;
-        case 'very-healthy':
-          requireHealthy = true;
-          break;
-        case 'cheap':
-          requireBudget = true;
-          break;
         default:
           break;
       }
@@ -74,21 +66,8 @@ const fetchRecipes = async (restrictions) => {
     `https://api.spoonacular.com/recipes/complexSearch?${params.toString()}`
   );
   
-  // Client-side filtering to ensure accuracy
-  let recipes = data.results || [];
-  
   // Filter: must have source URL
-  recipes = recipes.filter((recipe) => recipe.sourceUrl);
-  
-  // Filter: Very Healthy (health score >= 75)
-  if (requireHealthy) {
-    recipes = recipes.filter((recipe) => recipe.healthScore >= 75);
-  }
-  
-  // Filter: Budget Friendly (price per serving <= $3.00 = 300 cents)
-  if (requireBudget) {
-    recipes = recipes.filter((recipe) => recipe.pricePerServing <= 300);
-  }
+  const recipes = (data.results || []).filter((recipe) => recipe.sourceUrl);
   
   return recipes.slice(0, 6);
 };

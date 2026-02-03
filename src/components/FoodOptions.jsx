@@ -17,9 +17,6 @@ const options = [
   { value: 'dairy-free', label: '🥛 Dairy Free' },
   { value: 'lacto-vegetarian', label: '🧀 Lacto-Vegetarian' },
   { value: 'ovo-vegetarian', label: '🥚 Ovo-Vegetarian' },
-  // Health & Budget
-  { value: 'very-healthy', label: '💪 Very Healthy (75+ score)' },
-  { value: 'cheap', label: '💰 Budget Friendly (<$3/serving)' },
 ];
 
 const animatedComponents = makeAnimated();
