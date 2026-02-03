@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const RecipeCard = ({ recipe, onClick, onToggleFavorite, onAddToMealPlan, isFavorite, isDark }) => {
+const RecipeCard = ({ recipe, onClick, onToggleFavorite, onAddToMealPlan, isFavorite }) => {
   return (
     <div 
       className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group"
@@ -82,7 +82,6 @@ RecipeCard.propTypes = {
   onToggleFavorite: PropTypes.func.isRequired,
   onAddToMealPlan: PropTypes.func,
   isFavorite: PropTypes.bool.isRequired,
-  isDark: PropTypes.bool,
 };
 
 export default RecipeCard;

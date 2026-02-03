@@ -209,7 +209,6 @@ function App() {
               mealPlan={mealPlan}
               onRemoveMeal={handleRemoveMeal}
               onViewRecipe={handleRecipeClick}
-              isDark={darkMode}
             />
           </div>
         )}
@@ -383,7 +382,6 @@ function App() {
                     onToggleFavorite={() => toggleFavorite(recipe)}
                     onAddToMealPlan={() => handleAddToMealPlan(recipe)}
                     isFavorite={isFavorite(recipe)}
-                    isDark={darkMode}
                   />
                 ))}
               </div>

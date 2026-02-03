@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const MealPlanner = ({ mealPlan, onRemoveMeal, onViewRecipe, isDark }) => {
+const MealPlanner = ({ mealPlan, onRemoveMeal, onViewRecipe }) => {
   // Get the current week's dates
   const getWeekDates = () => {
     const today = new Date();
@@ -108,7 +108,6 @@ MealPlanner.propTypes = {
   mealPlan: PropTypes.object.isRequired,
   onRemoveMeal: PropTypes.func.isRequired,
   onViewRecipe: PropTypes.func.isRequired,
-  isDark: PropTypes.bool,
 };
 
 export default MealPlanner;

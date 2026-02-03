@@ -20,7 +20,6 @@ const DayPicker = ({ onSelectDay, onClose }) => {
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         dateKey: date.toISOString().split('T')[0],
         isToday: date.toDateString() === today.toDateString(),
-        isPast: date < new Date(today.setHours(0, 0, 0, 0)),
       };
     });
   };
