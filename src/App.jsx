@@ -14,7 +14,7 @@ const fetchRecipes = async (restrictions) => {
     throw new Error('API key not configured. Please add VITE_SPOONACULAR_API_KEY to your .env file');
   }
   const { data } = await axios.get(
-    `https://api.spoonacular.com/recipes/random?number=5&tags=${restrictions}&apiKey=${API_KEY}`
+    `https://api.spoonacular.com/recipes/random?number=6&tags=${restrictions}&apiKey=${API_KEY}`
   );
   return data.recipes;
 };
@@ -115,6 +115,15 @@ function App() {
 
   const handleSelectDay = (dateKey) => {
     if (recipeToAdd) {
+      // Check if recipe is already on this day
+      const existingMeals = mealPlan[dateKey] || [];
+      const alreadyAdded = existingMeals.some((meal) => meal.id === recipeToAdd.id);
+      
+      if (alreadyAdded) {
+        alert('This recipe is already planned for this day!');
+        return;
+      }
+      
       setMealPlan((prev) => ({
         ...prev,
         [dateKey]: [...(prev[dateKey] || []), recipeToAdd],
@@ -236,7 +245,7 @@ function App() {
                     Loading...
                   </>
                 ) : (
-                  '🎲 Get 5 Random Recipes'
+                  '🎲 Get Random Recipes'
                 )}
               </button>
               
