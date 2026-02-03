@@ -6,6 +6,7 @@ import RecipeCard from './components/RecipeCard';
 import MealPlanner from './components/MealPlanner';
 import DayPicker from './components/DayPicker';
 import ShoppingList from './components/ShoppingList';
+import RecipeHistory from './components/RecipeHistory';
 
 const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 
@@ -48,6 +49,8 @@ function App() {
   const [recipeToAdd, setRecipeToAdd] = useState(null);
   const [showMealPlanner, setShowMealPlanner] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [recipeHistory, setRecipeHistory] = useState(() => getFromStorage('recipeApp_history', []));
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -68,6 +71,34 @@ function App() {
   useEffect(() => {
     saveToStorage('recipeApp_favorites', favorites);
   }, [favorites]);
+
+  // Save history when it changes
+  useEffect(() => {
+    saveToStorage('recipeApp_history', recipeHistory);
+  }, [recipeHistory]);
+
+  // Helper to add to history
+  const addToHistory = (recipe, action) => {
+    setRecipeHistory((prev) => {
+      const entry = {
+        recipe: {
+          id: recipe.id,
+          title: recipe.title,
+          image: recipe.image,
+          servings: recipe.servings,
+          readyInMinutes: recipe.readyInMinutes,
+        },
+        action,
+        timestamp: Date.now(),
+      };
+      // Keep last 100 entries
+      return [entry, ...prev].slice(0, 100);
+    });
+  };
+
+  const clearHistory = () => {
+    setRecipeHistory([]);
+  };
 
   const { data: recipes, isLoading, error, refetch } = useQuery({
     queryKey: ['recipes', restrictions],
@@ -90,6 +121,7 @@ function App() {
 
   const handleRecipeClick = (recipe) => {
     setSelectedRecipe(recipe);
+    addToHistory(recipe, 'viewed');
   };
 
   const handleBack = () => {
@@ -102,6 +134,7 @@ function App() {
       setFavorites(favorites.filter((fav) => fav.id !== recipe.id));
     } else {
       setFavorites([...favorites, recipe]);
+      addToHistory(recipe, 'favorited');
     }
   };
 
@@ -135,6 +168,7 @@ function App() {
         ...prev,
         [dateKey]: [...(prev[dateKey] || []), recipeWithServings],
       }));
+      addToHistory(recipeToAdd, 'planned');
       setShowDayPicker(false);
       setRecipeToAdd(null);
     }
@@ -175,6 +209,19 @@ function App() {
         />
       )}
 
+      {/* Recipe History Modal */}
+      {showHistory && (
+        <RecipeHistory
+          history={recipeHistory}
+          onViewRecipe={(recipe) => {
+            setShowHistory(false);
+            handleRecipeClick(recipe);
+          }}
+          onClearHistory={clearHistory}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -184,6 +231,14 @@ function App() {
               🍳 Pick A Random Recipe
             </h1>
             <div className="flex-1 flex justify-end gap-2">
+              <button
+                onClick={() => setShowHistory(true)}
+                className="p-2 rounded-lg transition-colors duration-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                aria-label="Recipe history"
+                title="Recipe History"
+              >
+                📜
+              </button>
               <button
                 onClick={() => setShowShoppingList(true)}
                 className="p-2 rounded-lg transition-colors duration-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
