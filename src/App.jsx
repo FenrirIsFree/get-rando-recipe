@@ -14,12 +14,74 @@ const fetchRecipes = async (restrictions) => {
   if (!API_KEY) {
     throw new Error('API key not configured. Please add VITE_SPOONACULAR_API_KEY to your .env file');
   }
-  // Fetch extra to account for recipes without source URLs
+  
+  // Parse restrictions into API parameters
+  const params = new URLSearchParams({
+    apiKey: API_KEY,
+    number: '12',
+    addRecipeInformation: 'true',
+    fillIngredients: 'true',
+    sort: 'random',
+  });
+  
+  // Map our filter values to API parameters
+  const dietFilters = [];
+  const intoleranceFilters = [];
+  let minHealthScore = null;
+  let maxPricePerServing = null;
+  
+  if (restrictions) {
+    const tags = restrictions.split(',');
+    tags.forEach((tag) => {
+      switch (tag) {
+        case 'vegetarian':
+        case 'vegan':
+        case 'pescetarian':
+        case 'ketogenic':
+        case 'paleolithic':
+        case 'primal':
+        case 'whole30':
+        case 'lacto-vegetarian':
+        case 'ovo-vegetarian':
+          dietFilters.push(tag);
+          break;
+        case 'gluten-free':
+          intoleranceFilters.push('gluten');
+          break;
+        case 'dairy-free':
+          intoleranceFilters.push('dairy');
+          break;
+        case 'very-healthy':
+          minHealthScore = 75;
+          break;
+        case 'cheap':
+          maxPricePerServing = 300; // $3.00 per serving (API uses cents)
+          break;
+        default:
+          break;
+      }
+    });
+  }
+  
+  if (dietFilters.length > 0) {
+    params.set('diet', dietFilters.join(','));
+  }
+  if (intoleranceFilters.length > 0) {
+    params.set('intolerances', intoleranceFilters.join(','));
+  }
+  if (minHealthScore) {
+    params.set('minHealthScore', minHealthScore.toString());
+  }
+  if (maxPricePerServing) {
+    params.set('maxPricePerServing', maxPricePerServing.toString());
+  }
+  
   const { data } = await axios.get(
-    `https://api.spoonacular.com/recipes/random?number=12&tags=${restrictions}&apiKey=${API_KEY}`
+    `https://api.spoonacular.com/recipes/complexSearch?${params.toString()}`
   );
+  
   // Filter to only recipes with source URLs, take first 6
-  const validRecipes = data.recipes.filter((recipe) => recipe.sourceUrl);
+  const validRecipes = (data.results || []).filter((recipe) => recipe.sourceUrl);
   return validRecipes.slice(0, 6);
 };
 
@@ -410,6 +472,20 @@ function App() {
                 )}
                 {selectedRecipe.cheap && (
                   <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full text-sm">💰 Budget</span>
+                )}
+                {selectedRecipe.healthScore != null && (
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    selectedRecipe.healthScore >= 75
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}>💪 Health: {selectedRecipe.healthScore}/100</span>
+                )}
+                {selectedRecipe.pricePerServing != null && (
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    selectedRecipe.pricePerServing <= 300
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}>💵 ${(selectedRecipe.pricePerServing / 100).toFixed(2)}/serving</span>
                 )}
                 {selectedRecipe.readyInMinutes && (
                   <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-sm">⏱️ {selectedRecipe.readyInMinutes} min</span>

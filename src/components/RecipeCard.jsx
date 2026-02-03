@@ -50,6 +50,26 @@ const RecipeCard = ({ recipe, onClick, onToggleFavorite, onAddToMealPlan, isFavo
               ⏱️ {recipe.readyInMinutes} min
             </span>
           )}
+          {recipe.healthScore != null && (
+            <span className={`text-xs px-2 py-1 rounded ${
+              recipe.healthScore >= 75 
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                : recipe.healthScore >= 50
+                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+            }`}>
+              💪 {recipe.healthScore}
+            </span>
+          )}
+          {recipe.pricePerServing != null && (
+            <span className={`text-xs px-2 py-1 rounded ${
+              recipe.pricePerServing <= 300
+                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+            }`}>
+              💰 ${(recipe.pricePerServing / 100).toFixed(2)}
+            </span>
+          )}
           {recipe.vegetarian && (
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-1 rounded">
               🥬 Veg
