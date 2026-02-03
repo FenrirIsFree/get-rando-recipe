@@ -2,8 +2,17 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 // Helper to normalize ingredient names for combining duplicates
+// More robust than just removing trailing 's'
 const normalizeIngredient = (name) => {
-  return name.toLowerCase().trim().replace(/s$/, ''); // basic pluralization handling
+  return name
+    .toLowerCase()
+    .trim()
+    // Handle common pluralization patterns
+    .replace(/ies$/, 'y')      // berries → berry
+    .replace(/oes$/, 'o')      // tomatoes → tomato, potatoes → potato
+    .replace(/ves$/, 'f')      // leaves → leaf
+    .replace(/es$/, '')        // dishes → dish, boxes → box
+    .replace(/s$/, '');        // basic plural
 };
 
 // Helper to combine amounts with same units
@@ -28,17 +37,12 @@ const combineAmounts = (amounts) => {
     .join(' + ');
 };
 
-const ShoppingList = ({ mealPlan, onClose, isDark }) => {
+const ShoppingList = ({ mealPlan, onClose }) => {
   const [checkedItems, setCheckedItems] = useState(() => {
     const saved = localStorage.getItem('recipeApp_shoppingChecked');
     return saved ? JSON.parse(saved) : {};
   });
   const [showChecked, setShowChecked] = useState(true);
-
-  // Save checked state
-  useEffect(() => {
-    localStorage.setItem('recipeApp_shoppingChecked', JSON.stringify(checkedItems));
-  }, [checkedItems]);
 
   // Extract and organize ingredients from meal plan
   const getShoppingList = () => {
@@ -94,7 +98,28 @@ const ShoppingList = ({ mealPlan, onClose, isDark }) => {
   };
 
   const shoppingList = getShoppingList();
-  const totalItems = Object.values(shoppingList).flat().length;
+  const allItemIds = Object.values(shoppingList).flat().map((item) => item.id);
+  const totalItems = allItemIds.length;
+  
+  // Clean up stale checked items that are no longer in the shopping list
+  useEffect(() => {
+    const validCheckedItems = {};
+    allItemIds.forEach((id) => {
+      if (checkedItems[id]) {
+        validCheckedItems[id] = true;
+      }
+    });
+    // Only update if there were stale items
+    if (Object.keys(validCheckedItems).length !== Object.keys(checkedItems).length) {
+      setCheckedItems(validCheckedItems);
+    }
+  }, [mealPlan]); // Re-run when meal plan changes
+
+  // Save checked state
+  useEffect(() => {
+    localStorage.setItem('recipeApp_shoppingChecked', JSON.stringify(checkedItems));
+  }, [checkedItems]);
+
   const checkedCount = Object.values(checkedItems).filter(Boolean).length;
 
   const toggleItem = (itemId) => {
@@ -110,17 +135,18 @@ const ShoppingList = ({ mealPlan, onClose, isDark }) => {
 
   const checkAll = () => {
     const allChecked = {};
-    Object.values(shoppingList).flat().forEach((item) => {
-      allChecked[item.id] = true;
+    allItemIds.forEach((id) => {
+      allChecked[id] = true;
     });
     setCheckedItems(allChecked);
   };
 
   const isEmpty = totalItems === 0;
+  const allChecked = checkedCount === totalItems && totalItems > 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-colors duration-300`}>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-colors duration-300">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -136,11 +162,11 @@ const ShoppingList = ({ mealPlan, onClose, isDark }) => {
           </div>
           
           {!isEmpty && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {checkedCount} of {totalItems} items checked
               </span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setShowChecked(!showChecked)}
                   className="text-sm px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -148,10 +174,10 @@ const ShoppingList = ({ mealPlan, onClose, isDark }) => {
                   {showChecked ? 'Hide' : 'Show'} checked
                 </button>
                 <button
-                  onClick={clearChecked}
+                  onClick={allChecked ? clearChecked : checkAll}
                   className="text-sm px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
-                  Clear all ✓
+                  {allChecked ? 'Uncheck all' : 'Check all'}
                 </button>
               </div>
             </div>
@@ -268,7 +294,6 @@ const ShoppingList = ({ mealPlan, onClose, isDark }) => {
 ShoppingList.propTypes = {
   mealPlan: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
-  isDark: PropTypes.bool,
 };
 
 export default ShoppingList;

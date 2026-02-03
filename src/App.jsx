@@ -155,7 +155,6 @@ function App() {
         <ShoppingList
           mealPlan={mealPlan}
           onClose={() => setShowShoppingList(false)}
-          isDark={darkMode}
         />
       )}
 
