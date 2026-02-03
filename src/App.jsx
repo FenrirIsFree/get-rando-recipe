@@ -80,6 +80,11 @@ function App() {
   // Helper to add to history
   const addToHistory = (recipe, action) => {
     setRecipeHistory((prev) => {
+      // Remove existing entry for same recipe+action (to avoid duplicates)
+      const filtered = prev.filter(
+        (entry) => !(entry.recipe.id === recipe.id && entry.action === action)
+      );
+      
       const entry = {
         recipe: {
           id: recipe.id,
@@ -91,8 +96,8 @@ function App() {
         action,
         timestamp: Date.now(),
       };
-      // Keep last 100 entries
-      return [entry, ...prev].slice(0, 100);
+      // Add to top, keep last 100 entries
+      return [entry, ...filtered].slice(0, 100);
     });
   };
 
