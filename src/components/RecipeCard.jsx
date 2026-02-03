@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const RecipeCard = ({ recipe, onClick, onToggleFavorite, isFavorite, isDark }) => {
+const RecipeCard = ({ recipe, onClick, onToggleFavorite, onAddToMealPlan, isFavorite, isDark }) => {
   return (
     <div 
       className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group"
@@ -14,15 +14,30 @@ const RecipeCard = ({ recipe, onClick, onToggleFavorite, isFavorite, isDark }) =
             className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-200"
             onClick={onClick}
           />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite();
-            }}
-            className="absolute top-2 right-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 p-2 rounded-full transition-colors duration-200"
-          >
-            <span className="text-xl">{isFavorite ? '❤️' : '🤍'}</span>
-          </button>
+          <div className="absolute top-2 right-2 flex gap-1">
+            {onAddToMealPlan && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToMealPlan();
+                }}
+                className="bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 p-2 rounded-full transition-colors duration-200"
+                title="Add to meal plan"
+              >
+                <span className="text-lg">📅</span>
+              </button>
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
+              className="bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 p-2 rounded-full transition-colors duration-200"
+              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <span className="text-lg">{isFavorite ? '❤️' : '🤍'}</span>
+            </button>
+          </div>
         </div>
       )}
       <div className="p-4" onClick={onClick}>
@@ -65,6 +80,7 @@ RecipeCard.propTypes = {
   recipe: PropTypes.object.isRequired,
   onClick: PropTypes.func.isRequired,
   onToggleFavorite: PropTypes.func.isRequired,
+  onAddToMealPlan: PropTypes.func,
   isFavorite: PropTypes.bool.isRequired,
   isDark: PropTypes.bool,
 };

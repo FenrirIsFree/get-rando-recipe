@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import FoodOptions from './components/FoodOptions';
 import RecipeCard from './components/RecipeCard';
+import MealPlanner from './components/MealPlanner';
+import DayPicker from './components/DayPicker';
 
 const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 
@@ -16,15 +18,14 @@ const fetchRecipes = async (restrictions) => {
   return data.recipes;
 };
 
-// Get favorites from localStorage
-const getFavorites = () => {
-  const saved = localStorage.getItem('recipeApp_favorites');
-  return saved ? JSON.parse(saved) : [];
+// localStorage helpers
+const getFromStorage = (key, defaultValue) => {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : defaultValue;
 };
 
-// Save favorites to localStorage
-const saveFavorites = (favorites) => {
-  localStorage.setItem('recipeApp_favorites', JSON.stringify(favorites));
+const saveToStorage = (key, value) => {
+  localStorage.setItem(key, JSON.stringify(value));
 };
 
 // Get dark mode preference
@@ -38,9 +39,13 @@ function App() {
   const [restrictions, setRestrictions] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [shouldFetch, setShouldFetch] = useState(false);
-  const [favorites, setFavorites] = useState(getFavorites);
+  const [favorites, setFavorites] = useState(() => getFromStorage('recipeApp_favorites', []));
+  const [mealPlan, setMealPlan] = useState(() => getFromStorage('recipeApp_mealPlan', {}));
   const [showFavorites, setShowFavorites] = useState(false);
   const [darkMode, setDarkMode] = useState(getDarkMode);
+  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [recipeToAdd, setRecipeToAdd] = useState(null);
+  const [showMealPlanner, setShowMealPlanner] = useState(false);
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -49,8 +54,18 @@ function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('recipeApp_darkMode', JSON.stringify(darkMode));
+    saveToStorage('recipeApp_darkMode', darkMode);
   }, [darkMode]);
+
+  // Save meal plan when it changes
+  useEffect(() => {
+    saveToStorage('recipeApp_mealPlan', mealPlan);
+  }, [mealPlan]);
+
+  // Save favorites when they change
+  useEffect(() => {
+    saveToStorage('recipeApp_favorites', favorites);
+  }, [favorites]);
 
   const { data: recipes, isLoading, error, refetch } = useQuery({
     queryKey: ['recipes', restrictions],
@@ -80,25 +95,59 @@ function App() {
   };
 
   const toggleFavorite = (recipe) => {
-    const isFavorite = favorites.some((fav) => fav.id === recipe.id);
-    let newFavorites;
-    
-    if (isFavorite) {
-      newFavorites = favorites.filter((fav) => fav.id !== recipe.id);
+    const isFav = favorites.some((fav) => fav.id === recipe.id);
+    if (isFav) {
+      setFavorites(favorites.filter((fav) => fav.id !== recipe.id));
     } else {
-      newFavorites = [...favorites, recipe];
+      setFavorites([...favorites, recipe]);
     }
-    
-    setFavorites(newFavorites);
-    saveFavorites(newFavorites);
   };
 
   const isFavorite = (recipe) => favorites.some((fav) => fav.id === recipe.id);
+
+  // Meal planning functions
+  const handleAddToMealPlan = (recipe) => {
+    setRecipeToAdd(recipe);
+    setShowDayPicker(true);
+  };
+
+  const handleSelectDay = (dateKey) => {
+    if (recipeToAdd) {
+      setMealPlan((prev) => ({
+        ...prev,
+        [dateKey]: [...(prev[dateKey] || []), recipeToAdd],
+      }));
+      setShowDayPicker(false);
+      setRecipeToAdd(null);
+    }
+  };
+
+  const handleRemoveMeal = (dateKey, recipeId) => {
+    setMealPlan((prev) => ({
+      ...prev,
+      [dateKey]: prev[dateKey].filter((meal) => meal.id !== recipeId),
+    }));
+  };
+
+  const getMealCount = () => {
+    return Object.values(mealPlan).reduce((acc, meals) => acc + meals.length, 0);
+  };
 
   const displayRecipes = showFavorites ? favorites : recipes;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+      {/* Day Picker Modal */}
+      {showDayPicker && (
+        <DayPicker
+          onSelectDay={handleSelectDay}
+          onClose={() => {
+            setShowDayPicker(false);
+            setRecipeToAdd(null);
+          }}
+        />
+      )}
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -107,7 +156,18 @@ function App() {
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white text-center">
               🍳 Pick A Random Recipe
             </h1>
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end gap-2">
+              <button
+                onClick={() => setShowMealPlanner(!showMealPlanner)}
+                className={`p-2 rounded-lg transition-colors duration-200 ${
+                  showMealPlanner
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                aria-label="Toggle meal planner"
+              >
+                📅 {getMealCount() > 0 && <span className="text-xs">({getMealCount()})</span>}
+              </button>
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
@@ -124,6 +184,18 @@ function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Meal Planner Section */}
+        {showMealPlanner && (
+          <div className="mb-8">
+            <MealPlanner
+              mealPlan={mealPlan}
+              onRemoveMeal={handleRemoveMeal}
+              onViewRecipe={handleRecipeClick}
+              isDark={darkMode}
+            />
+          </div>
+        )}
+
         {/* Search Form */}
         {!selectedRecipe && (
           <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-colors duration-300">
@@ -190,12 +262,22 @@ function App() {
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                   {selectedRecipe.title}
                 </h2>
-                <button
-                  onClick={() => toggleFavorite(selectedRecipe)}
-                  className="text-2xl hover:scale-110 transition-transform"
-                >
-                  {isFavorite(selectedRecipe) ? '❤️' : '🤍'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleAddToMealPlan(selectedRecipe)}
+                    className="text-2xl hover:scale-110 transition-transform"
+                    title="Add to meal plan"
+                  >
+                    📅
+                  </button>
+                  <button
+                    onClick={() => toggleFavorite(selectedRecipe)}
+                    className="text-2xl hover:scale-110 transition-transform"
+                    title={isFavorite(selectedRecipe) ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    {isFavorite(selectedRecipe) ? '❤️' : '🤍'}
+                  </button>
+                </div>
               </div>
               
               <div className="flex flex-wrap gap-2 mb-6">
@@ -250,13 +332,19 @@ function App() {
                 >
                   ← Back to Results
                 </button>
+                <button
+                  onClick={() => handleAddToMealPlan(selectedRecipe)}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+                >
+                  📅 Add to Meal Plan
+                </button>
                 <a
                   href={selectedRecipe.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 text-center"
                 >
-                  View Original Recipe →
+                  View Original →
                 </a>
               </div>
             </div>
@@ -275,6 +363,7 @@ function App() {
                     recipe={recipe} 
                     onClick={() => handleRecipeClick(recipe)}
                     onToggleFavorite={() => toggleFavorite(recipe)}
+                    onAddToMealPlan={() => handleAddToMealPlan(recipe)}
                     isFavorite={isFavorite(recipe)}
                     isDark={darkMode}
                   />
