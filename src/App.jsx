@@ -5,6 +5,7 @@ import FoodOptions from './components/FoodOptions';
 import RecipeCard from './components/RecipeCard';
 import MealPlanner from './components/MealPlanner';
 import DayPicker from './components/DayPicker';
+import ShoppingList from './components/ShoppingList';
 
 const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 
@@ -46,6 +47,7 @@ function App() {
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [recipeToAdd, setRecipeToAdd] = useState(null);
   const [showMealPlanner, setShowMealPlanner] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -148,6 +150,15 @@ function App() {
         />
       )}
 
+      {/* Shopping List Modal */}
+      {showShoppingList && (
+        <ShoppingList
+          mealPlan={mealPlan}
+          onClose={() => setShowShoppingList(false)}
+          isDark={darkMode}
+        />
+      )}
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -157,6 +168,14 @@ function App() {
               🍳 Pick A Random Recipe
             </h1>
             <div className="flex-1 flex justify-end gap-2">
+              <button
+                onClick={() => setShowShoppingList(true)}
+                className="p-2 rounded-lg transition-colors duration-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                aria-label="Shopping list"
+                title="Shopping List"
+              >
+                🛒
+              </button>
               <button
                 onClick={() => setShowMealPlanner(!showMealPlanner)}
                 className={`p-2 rounded-lg transition-colors duration-200 ${
