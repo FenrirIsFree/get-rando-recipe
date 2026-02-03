@@ -18,7 +18,7 @@ const fetchRecipes = async (restrictions) => {
   // Parse restrictions into API parameters
   const params = new URLSearchParams({
     apiKey: API_KEY,
-    number: '12',
+    number: '24', // Fetch more to account for client-side filtering
     addRecipeInformation: 'true',
     fillIngredients: 'true',
     sort: 'random',
@@ -27,8 +27,8 @@ const fetchRecipes = async (restrictions) => {
   // Map our filter values to API parameters
   const dietFilters = [];
   const intoleranceFilters = [];
-  let minHealthScore = null;
-  let maxPricePerServing = null;
+  let requireHealthy = false;
+  let requireBudget = false;
   
   if (restrictions) {
     const tags = restrictions.split(',');
@@ -52,10 +52,10 @@ const fetchRecipes = async (restrictions) => {
           intoleranceFilters.push('dairy');
           break;
         case 'very-healthy':
-          minHealthScore = 75;
+          requireHealthy = true;
           break;
         case 'cheap':
-          maxPricePerServing = 300; // $3.00 per serving (API uses cents)
+          requireBudget = true;
           break;
         default:
           break;
@@ -69,20 +69,28 @@ const fetchRecipes = async (restrictions) => {
   if (intoleranceFilters.length > 0) {
     params.set('intolerances', intoleranceFilters.join(','));
   }
-  if (minHealthScore) {
-    params.set('minHealthScore', minHealthScore.toString());
-  }
-  if (maxPricePerServing) {
-    params.set('maxPricePerServing', maxPricePerServing.toString());
-  }
   
   const { data } = await axios.get(
     `https://api.spoonacular.com/recipes/complexSearch?${params.toString()}`
   );
   
-  // Filter to only recipes with source URLs, take first 6
-  const validRecipes = (data.results || []).filter((recipe) => recipe.sourceUrl);
-  return validRecipes.slice(0, 6);
+  // Client-side filtering to ensure accuracy
+  let recipes = data.results || [];
+  
+  // Filter: must have source URL
+  recipes = recipes.filter((recipe) => recipe.sourceUrl);
+  
+  // Filter: Very Healthy (health score >= 75)
+  if (requireHealthy) {
+    recipes = recipes.filter((recipe) => recipe.healthScore >= 75);
+  }
+  
+  // Filter: Budget Friendly (price per serving <= $3.00 = 300 cents)
+  if (requireBudget) {
+    recipes = recipes.filter((recipe) => recipe.pricePerServing <= 300);
+  }
+  
+  return recipes.slice(0, 6);
 };
 
 // localStorage helpers
